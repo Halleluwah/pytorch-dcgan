@@ -1,5 +1,6 @@
 # Torch imports
 import torch
+import torchvision.utils as vutils
 
 # Other libraries
 import argparse
@@ -98,11 +99,19 @@ def choose():
 
 
 ABC = choose()
+
+# Save vectors
+with torch.no_grad():
+    for vn in ['A', 'B', 'C']:
+        vector = torch.stack(ABC[vn], dim=0)
+        fake = generator(vector)
+        fake = (fake + 1) * 0.5
+        vutils.save_image(fake, join('./output', '{}.jpg'.format(vn)))
+
+# Average three images chosen for each vector
 A = ABC['A']
 B = ABC['B']
 C = ABC['C']
-
-# Average three images chosen for each vector
 A_avg = (A[0] + A[1] + A[2]) / 3
 B_avg = (B[0] + B[1] + B[2]) / 3
 C_avg = (C[0] + C[1] + C[2]) / 3
@@ -115,14 +124,4 @@ noise = torch.stack([A_avg, B_avg, C_avg, final_noise], dim=0)
 with torch.no_grad():
     fake = generator(noise)
     fake = (fake + 1) * 0.5
-    fake = fake.permute(0, 2, 3, 1)
-
-    labels = ['A', '-B', '+C', '=']
-    plt.figure(figsize=(6, 2))
-    for i in range(fake.shape[0]):
-        plt.subplot(1, fake.shape[0], i + 1)
-        plt.imshow(fake[i].cpu())
-        plt.axis('off')
-        plt.title(labels[i])
-    plt.show()
-    plt.close()
+    vutils.save_image(fake, join('./output', 'a_avg-b_avg+c_avg.jpg'))
